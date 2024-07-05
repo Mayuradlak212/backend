@@ -26,7 +26,13 @@ mongoose.connect(process.env.MONGODB_URI, {
 // const funnelRoutes = require('./routes/funnelRoutes');
 
 // app.use('/api/funnels', funnelRoutes);
-
+app.get("/",(req,res)=>{
+res.json({
+    message:"Welcome to Ride-Sharing API",
+    success: true
+   
+})
+})
 // Start the server
 const riderRoutes= require("./api/controller/rider.controller");
 app.use("/rides",riderRoutes);
