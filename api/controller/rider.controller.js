@@ -1,25 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const Ride = require('../model/rides');
-
+const NodeCache = require("node-cache");
+const myCache = new NodeCache();
 // Create a new ride
 router.post('/', async (req, res) => {
   try {
     const newRide = new Ride({
-        ride_id: '12345',
-        rideable_type: 'electric_bike',
-        started_at: new Date().toISOString(),
-        ended_at: new Date().toISOString(),
-        start_station_name: 'Station A',
-        start_station_id: 'STA001',
-        end_station_name: 'Station B',
-        end_station_id: 'STB001',
-        start_lat: '40.7128',
-        start_lng: '-74.0060',
-        end_lat: '40.7128',
-        end_lng: '-74.0060',
-        member_casual: 'member'
-      });
+      ride_id: '12345',
+      rideable_type: 'electric_bike',
+      started_at: new Date().toISOString(),
+      ended_at: new Date().toISOString(),
+      start_station_name: 'Station A',
+      start_station_id: 'STA001',
+      end_station_name: 'Station B',
+      end_station_id: 'STB001',
+      start_lat: '40.7128',
+      start_lng: '-74.0060',
+      end_lat: '40.7128',
+      end_lng: '-74.0060',
+      member_casual: 'member'
+    });
     const savedRide = await newRide.save();
     res.status(201).json(savedRide);
   } catch (err) {
@@ -31,20 +32,26 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   const page = parseInt(req.query.page) || 1;  // Current page number, default is 1
   const limit = parseInt(req.query.limit) || 10; // Number of items per page, default is 10
-  
+  const key = `rides-${req.query.page}-${req.query.limit}`;
   try {
+    const cachedData = myCache.get(key);
+    if (cachedData) {
+      return res.status(200).json(cachedData);
+
+    }
     const rides = await Ride.find()
       .skip((page - 1) * limit)  // Skip records
       .limit(limit);             // Limit records per page
 
     const totalRides = await Ride.countDocuments();  // Total count of rides
-    
-    res.status(200).json({
+    const payload = {
       currentPage: page,
-      count:totalRides,
+      count: totalRides,
       totalPages: Math.ceil(totalRides / limit),
       data: rides
-    });
+    }
+    myCache.set(key, payload, 5000);  // Cache the result for 1 minute
+    return res.status(200).json(payload);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
