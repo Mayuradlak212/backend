@@ -29,6 +29,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 app.get("/",(req,res)=>{
 res.json({
     message:"Welcome to Ride-Sharing API",
+    version:"1.1.0",
     success: true
    
 })
